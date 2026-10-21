@@ -1,0 +1,4 @@
+- [x] Enable patient sign-in and create private patient data tables.
+- [ ] Add account creation, sign-in, profile setup, and protected patient pages.
+- [ ] Save assessment responses, reports, bookings, and recovery analytics per patient.
+- [ ] Verify sign-in-gated flows and deployment checks.
