@@ -4,7 +4,7 @@ if (typeof process.loadEnvFile === 'function') {
   try { process.loadEnvFile('.env'); } catch {}
 }
 
-const url = process.env.DATABASE_URL || process.env.LOVABLE_DB_MIGRATION_URL;
+const url = process.env.DATABASE_URL;
 if (!url) {
   console.error("Missing DATABASE_URL");
   process.exit(1);
