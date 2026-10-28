@@ -56,6 +56,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: z.object({ next: z.string().optional() }),
   head: () => ({
     meta: [
@@ -71,6 +72,27 @@ export const Route = createFileRoute("/auth")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: ({ error, reset }) => (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
+      <div className="max-w-md space-y-4 rounded-2xl border bg-card p-8 shadow-lg">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <ShieldCheck className="h-6 w-6" />
+        </div>
+        <h1 className="font-display text-2xl font-bold">Sign In Error</h1>
+        <p className="text-sm text-muted-foreground">
+          {error?.message || "There was a problem loading the sign in page."}
+        </p>
+        <div className="flex justify-center gap-3 pt-2">
+          <Button onClick={() => reset()} variant="outline">
+            Try again
+          </Button>
+          <Button asChild>
+            <Link to="/">Back to Home</Link>
+          </Button>
+        </div>
+      </div>
+    </main>
+  ),
   component: AuthPage,
 });
 
@@ -90,28 +112,40 @@ function AuthPage() {
   const destination = safePatientDestination(next);
 
   const supabaseUrl =
-    import.meta.env.VITE_SUPABASE_URL || "https://zcflvdwlxenheuitpguc.supabase.co";
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_URL) ||
+    "https://zcflvdwlxenheuitpguc.supabase.co";
   const supabaseCallbackUrl = `${supabaseUrl}/auth/v1/callback`;
 
   const finishSignIn = async (
     user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]>,
   ) => {
-    await ensurePatientProfile(user, mode === "signup" ? name : undefined);
-    window.location.href = destination;
+    try {
+      await ensurePatientProfile(user, mode === "signup" ? name : undefined);
+    } catch (e) {
+      console.warn("Profile creation non-fatal error:", e);
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = destination;
+    }
   };
 
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user && alive) {
-        window.location.href = destination;
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.user && alive && typeof window !== "undefined") {
+          window.location.href = destination;
+        }
+      } catch (e) {
+        console.warn("Session check error (non-fatal):", e);
       }
     })();
     return () => {
       alive = false;
     };
   }, [destination]);
+
 
   const submitEmail = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -211,10 +245,15 @@ function AuthPage() {
 
   const signInWithGoogle = async () => {
     setGoogleBusy(true);
-    sessionStorage.setItem("patient-auth-next", destination);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("patient-auth-next", destination);
+    }
 
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : "/auth/callback";
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -229,7 +268,9 @@ function AuthPage() {
       if (error) throw error;
       // Note: In browser, Supabase redirects window automatically to Google login
     } catch (err: any) {
-      sessionStorage.removeItem("patient-auth-next");
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("patient-auth-next");
+      }
       setGoogleBusy(false);
       console.error("Google sign-in error:", err);
 
@@ -249,11 +290,14 @@ function AuthPage() {
   };
 
   const copyCallbackUrl = () => {
-    navigator.clipboard.writeText(supabaseCallbackUrl);
-    setCopiedCallback(true);
-    toast.success("Callback URL copied to clipboard!");
-    setTimeout(() => setCopiedCallback(false), 2000);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(supabaseCallbackUrl);
+      setCopiedCallback(true);
+      toast.success("Callback URL copied to clipboard!");
+      setTimeout(() => setCopiedCallback(false), 2000);
+    }
   };
+
 
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-2">
