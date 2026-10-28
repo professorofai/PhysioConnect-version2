@@ -1,17 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { 
-  Activity, 
-  Calendar, 
-  FileText, 
-  ArrowRight, 
-  Clock, 
-  MapPin, 
-  AlertCircle, 
-  PlusCircle, 
-  CheckCircle2, 
+import {
+  Activity,
+  Calendar,
+  FileText,
+  ArrowRight,
+  Clock,
+  MapPin,
+  AlertCircle,
+  PlusCircle,
+  CheckCircle2,
   TrendingUp,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -29,7 +29,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Patient Dashboard — PhysioConnect" },
-      { name: "description", content: "Your private recovery dashboard, assessment history, and physiotherapy sessions." },
+      {
+        name: "description",
+        content: "Your private recovery dashboard, assessment history, and physiotherapy sessions.",
+      },
     ],
   }),
   component: DashboardPage,
@@ -47,7 +50,9 @@ function DashboardPage() {
 
     async function loadPatientData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user || !active) return;
 
         setUserEmail(user.email || "");
@@ -113,18 +118,19 @@ function DashboardPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="border-primary/40 bg-background/80 text-primary">
+                <Badge
+                  variant="outline"
+                  className="border-primary/40 bg-background/80 text-primary"
+                >
                   <UserCheck className="mr-1 h-3 w-3" /> Verified Patient
                 </Badge>
-                {userEmail && (
-                  <span className="text-xs text-muted-foreground">{userEmail}</span>
-                )}
               </div>
               <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 Welcome back, {userName}!
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Manage your personalized recovery journey, clinical evaluations, and scheduled therapy sessions.
+                Manage your personalized recovery journey, clinical evaluations, and scheduled
+                therapy sessions.
               </p>
             </div>
 
@@ -174,9 +180,9 @@ function DashboardPage() {
               </span>
               <span className="text-xs text-muted-foreground">/ 10</span>
             </div>
-            <Progress 
-              value={latestAssessment ? (latestAssessment.pain_score / 10) * 100 : 0} 
-              className="mt-2 h-1.5" 
+            <Progress
+              value={latestAssessment ? (latestAssessment.pain_score / 10) * 100 : 0}
+              className="mt-2 h-1.5"
             />
           </Card>
 
@@ -191,9 +197,9 @@ function DashboardPage() {
               </span>
               <span className="text-xs text-muted-foreground">/ 10</span>
             </div>
-            <Progress 
-              value={latestAssessment ? (latestAssessment.mobility_score / 10) * 100 : 0} 
-              className="mt-2 h-1.5" 
+            <Progress
+              value={latestAssessment ? (latestAssessment.mobility_score / 10) * 100 : 0}
+              className="mt-2 h-1.5"
             />
           </Card>
         </div>
@@ -223,7 +229,8 @@ function DashboardPage() {
                 </div>
                 <h3 className="mt-3 font-semibold">No assessment completed yet</h3>
                 <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                  Complete our 3-minute intake questionnaire to get recovery recommendations and connect with a physiotherapist.
+                  Complete our 3-minute intake questionnaire to get recovery recommendations and
+                  connect with a physiotherapist.
                 </p>
                 <Button asChild size="sm" className="mt-4 bg-gradient-hero">
                   <Link to="/questionnaire">Start Intake Now</Link>
@@ -256,14 +263,19 @@ function DashboardPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground border-t pt-2">
-                      <span>Mobility: <strong className="text-foreground">{a.mobility_score}/10</strong></span>
+                      <span>
+                        Mobility: <strong className="text-foreground">{a.mobility_score}/10</strong>
+                      </span>
                       <span>·</span>
-                      <span>Duration: <strong className="text-foreground">{a.duration || "N/A"}</strong></span>
+                      <span>
+                        Duration: <strong className="text-foreground">{a.duration || "N/A"}</strong>
+                      </span>
                       {a.report_names && a.report_names.length > 0 && (
                         <>
                           <span>·</span>
                           <span className="text-primary font-medium">
-                            📎 {a.report_names.length} attached report{a.report_names.length > 1 ? "s" : ""}
+                            📎 {a.report_names.length} attached report
+                            {a.report_names.length > 1 ? "s" : ""}
                           </span>
                         </>
                       )}
@@ -297,7 +309,8 @@ function DashboardPage() {
                 </div>
                 <h3 className="mt-3 font-semibold">No appointments scheduled</h3>
                 <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                  Browse licensed physiotherapists near you and book your in-clinic or online consultation.
+                  Browse licensed physiotherapists near you and book your in-clinic or online
+                  consultation.
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-4">
                   <Link to="/find">Find a Physiotherapist</Link>
@@ -332,9 +345,7 @@ function DashboardPage() {
                         <Clock className="h-3.5 w-3.5" /> {b.appointment_time}
                       </span>
                       {b.price && (
-                        <span className="ml-auto font-medium text-foreground">
-                          ₹{b.price}
-                        </span>
+                        <span className="ml-auto font-medium text-foreground">₹{b.price}</span>
                       )}
                     </div>
                   </Card>
