@@ -152,7 +152,12 @@ app.get("/api/assessments", (req: Request, res: Response) => {
   res.json({ data: assessmentStore, total: assessmentStore.length });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Kinetiq Backend Server running at http://localhost:${PORT}`);
-  console.log(`👉 API Health Endpoint: http://localhost:${PORT}/api/health`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Kinetiq Backend Server running at http://localhost:${PORT}`);
+    console.log(`👉 API Health Endpoint: http://localhost:${PORT}/api/health`);
+  });
+}
+
+export default app;
+
