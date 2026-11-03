@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, CheckCircle2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { FemaleCartoonAvatar, MaleCartoonAvatar, NeutralCartoonAvatar } from "@/components/patient-avatar";
 
 export const Route = createFileRoute("/_authenticated/questionnaire")({
   head: () => ({
@@ -38,7 +39,10 @@ function Questionnaire() {
   const [form, setForm] = useState({
     name: typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : user.email?.split("@")[0] ?? "",
     age: "",
-    gender: "female",
+    gender:
+      (typeof user.user_metadata?.gender === "string" && user.user_metadata.gender) ||
+      (typeof window !== "undefined" ? localStorage.getItem("physio_patient_gender") : null) ||
+      "female",
     area: "Lower back",
     description: "",
     duration: "1-4 weeks",
@@ -50,7 +54,15 @@ function Questionnaire() {
     reports: [] as File[],
   });
 
-  const update = (k: keyof typeof form, v: unknown) => setForm(s => ({ ...s, [k]: v }));
+  const update = (k: keyof typeof form, v: unknown) => {
+    setForm(s => ({ ...s, [k]: v }));
+    if (k === "gender" && typeof v === "string") {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("physio_patient_gender", v);
+      }
+      void supabase.auth.updateUser({ data: { gender: v } });
+    }
+  };
   const toggleActivity = (a: string) =>
     update("activities", form.activities.includes(a) ? form.activities.filter(x => x !== a) : [...form.activities, a]);
 
@@ -171,11 +183,26 @@ function Questionnaire() {
                 </div>
               </div>
               <div>
-                <Label>Gender</Label>
-                <RadioGroup value={form.gender} onValueChange={v => update("gender", v)} className="mt-2 flex gap-4">
-                  {["female", "male", "other"].map(g => (
-                    <label key={g} className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-4 py-2 hover:bg-muted has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                      <RadioGroupItem value={g} /> <span className="capitalize">{g}</span>
+                <div className="flex items-center justify-between">
+                  <Label>Gender</Label>
+                  <span className="text-xs text-muted-foreground">Selects your cartoon avatar</span>
+                </div>
+                <RadioGroup value={form.gender} onValueChange={v => update("gender", v)} className="mt-2 grid grid-cols-3 gap-3">
+                  {[
+                    { id: "female", label: "Female", Avatar: FemaleCartoonAvatar },
+                    { id: "male", label: "Male", Avatar: MaleCartoonAvatar },
+                    { id: "other", label: "Neutral / Other", Avatar: NeutralCartoonAvatar },
+                  ].map(({ id, label, Avatar }) => (
+                    <label
+                      key={id}
+                      className="flex flex-col items-center gap-2 cursor-pointer rounded-xl border border-border/80 p-3 text-center transition-all hover:bg-muted has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-2 has-[:checked]:ring-primary/30"
+                    >
+                      <div className="h-10 w-10 overflow-hidden rounded-full shadow-xs">
+                        <Avatar />
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs font-medium">
+                        <RadioGroupItem value={id} /> <span>{label}</span>
+                      </div>
                     </label>
                   ))}
                 </RadioGroup>

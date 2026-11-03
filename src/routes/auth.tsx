@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { ensurePatientProfile, safePatientDestination } from "@/lib/patient-profile";
+import { FemaleCartoonAvatar, MaleCartoonAvatar, NeutralCartoonAvatar } from "@/components/patient-avatar";
+import { cn } from "@/lib/utils";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -103,6 +105,7 @@ function AuthPage() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [gender, setGender] = useState<"female" | "male" | "other">("female");
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -120,7 +123,11 @@ function AuthPage() {
     user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]>,
   ) => {
     try {
-      await ensurePatientProfile(user, mode === "signup" ? name : undefined);
+      await ensurePatientProfile(
+        user,
+        mode === "signup" ? name : undefined,
+        mode === "signup" ? gender : undefined,
+      );
     } catch (e) {
       console.warn("Profile creation non-fatal error:", e);
     }
@@ -152,10 +159,13 @@ function AuthPage() {
     if (!email.trim()) return;
     setBusy(true);
     try {
+      if (mode === "signup" && typeof window !== "undefined") {
+        localStorage.setItem("physio_patient_gender", gender);
+      }
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          data: mode === "signup" ? { full_name: name.trim() } : undefined,
+          data: mode === "signup" ? { full_name: name.trim(), gender } : undefined,
         },
       });
       if (error) throw error;
@@ -387,17 +397,78 @@ function AuthPage() {
 
               <form onSubmit={submitEmail} className="space-y-4">
                 {mode === "signup" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="patient-name">Full name</Label>
-                    <Input
-                      id="patient-name"
-                      autoComplete="name"
-                      placeholder="e.g. Sarah Jenkins"
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      required
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="patient-name">Full name</Label>
+                      <Input
+                        id="patient-name"
+                        autoComplete="name"
+                        placeholder="e.g. Sarah Jenkins"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Choose your cartoon avatar</Label>
+                        <span className="text-[11px] text-muted-foreground">Select character</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setGender("female")}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-xs transition-all cursor-pointer",
+                            gender === "female"
+                              ? "border-primary bg-primary/10 font-bold text-primary ring-2 ring-primary/40 shadow-xs"
+                              : "border-border/70 hover:bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <div className="h-12 w-12 rounded-full overflow-hidden shadow-xs">
+                            <FemaleCartoonAvatar />
+                          </div>
+                          <span>Female</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setGender("male")}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-xs transition-all cursor-pointer",
+                            gender === "male"
+                              ? "border-primary bg-primary/10 font-bold text-primary ring-2 ring-primary/40 shadow-xs"
+                              : "border-border/70 hover:bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <div className="h-12 w-12 rounded-full overflow-hidden shadow-xs">
+                            <MaleCartoonAvatar />
+                          </div>
+                          <span>Male</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setGender("other")}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-xs transition-all cursor-pointer",
+                            gender === "other"
+                              ? "border-primary bg-primary/10 font-bold text-primary ring-2 ring-primary/40 shadow-xs"
+                              : "border-border/70 hover:bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <div className="h-12 w-12 rounded-full overflow-hidden shadow-xs">
+                            <NeutralCartoonAvatar />
+                          </div>
+                          <span>Neutral</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Signing in with Google OAuth will automatically use your Google account photo. You can switch avatars anytime.
+                      </p>
+                    </div>
+                  </>
                 )}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -496,6 +567,18 @@ function AuthPage() {
                   {busy ? "Verifying…" : "Verify and sign in"}{" "}
                   <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-muted-foreground">Didn't receive the code?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => void submitEmail(e as any)}
+                    disabled={busy}
+                    className="font-semibold text-primary hover:underline disabled:opacity-50 cursor-pointer"
+                  >
+                    Resend code
+                  </button>
+                </div>
               </form>
             </div>
           )}

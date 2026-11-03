@@ -1,4 +1,4 @@
 - [x] Enable patient sign-in and create private patient data tables.
-- [ ] Add account creation, sign-in, profile setup, and protected patient pages.
-- [ ] Save assessment responses, reports, bookings, and recovery analytics per patient.
+- [x] Add account creation, sign-in, profile setup, and protected patient pages with custom cartoon and Google avatars.
+- [x] Save assessment responses, reports, bookings to Supabase with RLS, and interactive recovery analytics charts per patient.
 - [ ] Verify sign-in-gated flows and deployment checks.
