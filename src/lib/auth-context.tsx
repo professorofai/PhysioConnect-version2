@@ -142,19 +142,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!alive) return;
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      await extractUserInfo(currentUser);
-      if (event === "INITIAL_SESSION") {
-        setLoading(false);
-      }
-    });
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!alive) return;
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        await extractUserInfo(currentUser);
+        if (event === "INITIAL_SESSION") {
+          setLoading(false);
+        }
+      });
+      unsubscribe = () => authListener?.subscription?.unsubscribe();
+    } catch (err) {
+      console.warn("Supabase auth listener setup error:", err);
+    }
 
     return () => {
       alive = false;
-      authListener.subscription.unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   }, [extractUserInfo]);
 

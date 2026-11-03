@@ -29,28 +29,29 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  // Provide production defaults so client never throws fatal missing env error on Vercel
-  const SUPABASE_URL =
-    import.meta.env['VITE_SUPABASE_URL'] ||
-    process.env['SUPABASE_URL'] ||
-    process.env['VITE_SUPABASE_URL'] ||
-    'https://zcflvdwlxenheuitpguc.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-    process.env['SUPABASE_PUBLISHABLE_KEY'] ||
-    process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZmx2ZHdseGVuaGV1aXRwZ3VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5Mzk2NzMsImV4cCI6MjEwNjUxNTY3M30.GXTgSsEnJxPePiVtQtmIbNkfaYQS6I3SGQJSvEJa0uk';
+  const isBrowser = typeof window !== 'undefined';
+  const importMetaEnv = typeof import.meta !== 'undefined' && import.meta ? import.meta.env : undefined;
+  const procEnv = typeof process !== 'undefined' && process ? process.env : undefined;
 
+  const SUPABASE_URL =
+    importMetaEnv?.['VITE_SUPABASE_URL'] ||
+    procEnv?.['SUPABASE_URL'] ||
+    procEnv?.['VITE_SUPABASE_URL'] ||
+    'https://zcflvdwlxenheuitpguc.supabase.co';
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    importMetaEnv?.['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+    procEnv?.['SUPABASE_PUBLISHABLE_KEY'] ||
+    procEnv?.['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZmx2ZHdseGVuaGV1aXRwZ3VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5Mzk2NzMsImV4cCI6MjEwNjUxNTY3M30.GXTgSsEnJxPePiVtQtmIbNkfaYQS6I3SGQJSvEJa0uk';
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
+      persistSession: isBrowser,
+      autoRefreshToken: isBrowser,
     },
   });
 }

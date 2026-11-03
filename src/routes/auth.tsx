@@ -59,7 +59,9 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: z.object({ next: z.string().optional() }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    next: typeof search?.next === "string" ? search.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Patient sign in — PhysioConnect" },
